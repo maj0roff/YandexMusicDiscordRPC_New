@@ -22,7 +22,7 @@ class App:
         discord.connect()
         while True:
             current = yandex.get_current_playing_info()
-            time.sleep(1)
+            time.sleep(2)
             match current["type"]:
                 case "radio":
                     if self.desc != current["description"]:
