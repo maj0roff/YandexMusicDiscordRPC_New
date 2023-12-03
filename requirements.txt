@@ -1,0 +1,2 @@
+yandex_music
+pypresence
