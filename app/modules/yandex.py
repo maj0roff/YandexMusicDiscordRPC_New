@@ -1,6 +1,5 @@
 import os
 
-import yandex_music.exceptions
 from yandex_music import Client, TrackId
 
 
@@ -27,11 +26,11 @@ class Yandex:
         tid = fetched_track.id
         title = fetched_track.title
         artists = ", ".join(fetched_track.artists_name())
-        cover = f"https://{fetched_track.cover_uri.replace("%%", "800x800")}"
+        cover = f"https://{fetched_track.cover_uri.replace('%%', '800x800')}"
         if len(fetched_track.artists) != 1:
             artist_cover = None
         else:
-            artist_cover = f"https://{fetched_track.artists[0].cover.uri.replace("%%", "800x800")}"
+            artist_cover = f"https://{fetched_track.artists[0].cover.uri.replace('%%', '800x800')}"
 
         return {"id": tid,
                 "title": title,
@@ -45,24 +44,29 @@ class Yandex:
         cursor = Yandex()
         doneresult = {}
 
-        try:
-            queue_id = cursor.__get_last_queue_id().id
-            self.queue = self.cli.queue(queue_id)
-        except TypeError or yandex_music.exceptions.NotFoundError:
+        queue_raw = cursor.__get_last_queue_id()
+        if queue_raw.context.type == "radio":
             self.queue = cursor.__get_last_queue_id()
-            try:
-                queue_id = cursor.__get_last_queue_id().id
-                self.queue = self.cli.queue(queue_id)
-            except TypeError:
-                self.queue = cursor.__get_last_queue_id()
+        else:
+            self.queue = self.cli.queue(queue_raw.id)
 
         queue_type = self.queue.context.type
 
         match queue_type:
             case "radio":
-                doneresult.update({"type": "radio",
-                                   "id": self.queue.context.id,
-                                   "description": self.queue.context.description})
+                if self.queue.context.id.split(':')[0] == "track":
+                    radio_trackinfo = self.cli.tracks(self.queue.context.id.split(':')[1])[0]
+                    doneresult.update({"type": "radio_track",
+                                       "track_info": {
+                                           "id": radio_trackinfo['id'],
+                                           "title": radio_trackinfo['title'],
+                                           "artists": ", ".join(radio_trackinfo.artists_name()),
+                                           "cover_link": radio_trackinfo['cover_uri']
+                                       }})
+                else:
+                    doneresult.update({"type": "radio",
+                                       "id": self.queue.context.id,
+                                       "description": self.queue.context.description})
             case "various":
                 try:
                     track_info = cursor.__get_track_info(self.queue.get_current_track())
