@@ -9,8 +9,15 @@ Discord RPC для Яндекс Музыки
 
 ## Как использовать?
 1. Скачайте архив и распакуйте архив из релиз ветки
-2. Укажите ваш токен в файле config.ini
+2. Укажите ваш токен* в файле config.ini
 3. Запустите программу
+
+## Как получить токен*?
+Установите расширение: https://chromewebstore.google.com/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib (не реклама)
+Авторизуйтесь в Яндексе
+Вас начнёт перекидывать на бота. Из ссылки достаньте токен, он начинается на y0_
+
+Исходный код расширения (Автор MarshalX): https://github.com/MarshalX/yandex-music-token
 
 -----
 
