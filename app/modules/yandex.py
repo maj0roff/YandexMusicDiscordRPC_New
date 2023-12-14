@@ -12,7 +12,7 @@ class Yandex:
         try:
             self.cli = Client(self.token).init()
         except yandex_music.exceptions.UnauthorizedError:
-            raise "Токен не указан или не действителен"
+            raise yandex_music.exceptions.UnauthorizedError("Токен не указан или не действителен")
         self.queue = ""
 
     def __get_last_queue_id(self):
