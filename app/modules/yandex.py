@@ -56,7 +56,7 @@ class Yandex:
         doneresult = {}
         try:
             queue_raw = self.__get_last_queue_id()
-        except requests.exceptions.ReadTimeout or yandex_music.exceptions.TimedOutError:
+        except (requests.exceptions.ReadTimeout, yandex_music.exceptions.TimedOutError):
             queue_raw = self.__get_last_queue_id()
 
         if queue_raw.context.type == "radio":
