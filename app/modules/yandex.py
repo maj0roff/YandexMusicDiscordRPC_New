@@ -12,7 +12,7 @@ class Yandex:
         try:
             self.cli = Client(self.token).init()
         except yandex_music.exceptions.UnauthorizedError:
-            raise "Токен не указан или не действителен"
+            raise yandex_music.exceptions.UnauthorizedError("Токен не указан или не действителен")
         self.queue = ""
 
     def __get_last_queue_id(self):
@@ -56,7 +56,7 @@ class Yandex:
         doneresult = {}
         try:
             queue_raw = self.__get_last_queue_id()
-        except requests.exceptions.ReadTimeout or yandex_music.exceptions.TimedOutError:
+        except (requests.exceptions.ReadTimeout, yandex_music.exceptions.TimedOutError):
             queue_raw = self.__get_last_queue_id()
 
         if queue_raw.context.type == "radio":
