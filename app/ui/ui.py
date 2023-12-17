@@ -4,14 +4,30 @@ import wx
 
 import os
 import psutil
+import requests
+from PIL import Image, ImageDraw
 
 TRAY_TOOLTIP = 'YandexMusicRPC'
 TRAY_ICON = 'resources/logo.ico'
 TELEGRAM_ICON = 'resources/telegram.png'
 
 
-def png_to_bitmap(png):
-    return wx.Image(png, wx.BITMAP_TYPE_ANY).Rescale(18, 18, wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
+def add_corners(im, rad):
+    circle = Image.new('L', (rad * 2, rad * 2), 0)
+    draw = ImageDraw.Draw(circle)
+    draw.ellipse((0, 0, rad * 2 - 1, rad * 2 - 1), fill=255)
+    alpha = Image.new('L', im.size, 255)
+    w, h = im.size
+    alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
+    alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
+    alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
+    alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
+    im.putalpha(alpha)
+    return im
+
+
+def png_to_bitmap(png, size=(18, 18)):
+    return wx.Image(png, wx.BITMAP_TYPE_ANY).Rescale(size[0], size[1], wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
 
 
 def create_label(menu, icon, label, func):
@@ -26,19 +42,39 @@ def create_label(menu, icon, label, func):
 
 class TaskBarIcon(wx.adv.TaskBarIcon):
     def __init__(self, frame):
+        self.done_cover = None
+        self.artist_label = None
+        self.track_label = None
+
+        self.switch = ""
+        self.track_cover = ""
+
         self.frame = frame
         super(TaskBarIcon, self).__init__()
         self.set_icon(TRAY_ICON)
         self.ShowBalloon("Привет!", "Я нахожусь в трее.")
-        self.Bind(wx.adv.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.adv.EVT_TASKBAR_RIGHT_DOWN, self.on_right_down)
+        self.trackinfo = self.get_track_info()
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
         logo_label = create_label(menu, png_to_bitmap(TRAY_ICON), 'YandexMusicRPC', self.opengit)
         telegram_label = create_label(menu, png_to_bitmap(TELEGRAM_ICON), 'Мой телеграм канал', self.opentg)
         menu.AppendSeparator()
+        self.track_label = create_label(menu, self.done_cover, f'{self.trackinfo["track"]}', None)
+        self.artist_label = create_label(menu, None, f'{self.trackinfo["artist"]}', None)
+        menu.AppendSeparator()
         exit_label = create_label(menu, None, 'Выход', self.on_exit)
         return menu
+
+    def get_track_info(self) -> dict:
+        return {
+            'track': os.environ.get("CURRENT_TRACK") if os.environ.get(
+                "CURRENT_TRACK") is not None else "Ищем информацию о треке",
+            'artist': os.environ.get("CURRENT_ARTIST"),
+            'image': os.environ.get("CURRENT_IMAGE"),
+            'id': os.environ.get("CURRENT_ID")
+        }
 
     def set_icon(self, path):
         icon = wx.Icon(path)
@@ -50,8 +86,23 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
     def opentg(self, event):
         webbrowser.open("https://t.me/maj0rblog")
 
-    def on_left_down(self, event):
-        print('left click.')
+    def on_right_down(self, event):
+        self.trackinfo = self.get_track_info()
+        if self.switch != self.trackinfo["id"]:
+            self.switch = self.trackinfo['id']
+
+            if "https" in self.trackinfo["image"]:
+                img_data = requests.get(self.trackinfo["image"]).content
+                with open('resources/cache/cached_cover.png', 'wb') as handler:
+                    handler.write(img_data)
+                img = Image.open("resources/cache/cached_cover.png")
+                img = add_corners(img, 192)
+                img.save("resources/cache/cached_cover.png")
+                self.track_cover = "resources/cache/cached_cover.png"
+            else:
+                self.track_cover = f"resources/covers/{self.trackinfo['image']}.png"
+
+        self.done_cover = png_to_bitmap(self.track_cover, (32, 32))
 
     def on_exit(self, event):
         self.ShowBalloon("Выход", "Всё? Завершаю работу!")

@@ -14,9 +14,15 @@ class Listener:
     def __init__(self):
         self.switchid = "0"
         self.desc = "0"
-        self.radioimage = ""
-        self.radiostate = ""
-        self.radiodetails = ""
+        self.radioimage = dict
+        self.radiostate = str
+        self.radiodetails = str
+
+    def update_info(self, id):
+        os.environ['CURRENT_TRACK'] = str(self.radiostate)
+        os.environ['CURRENT_ARTIST'] = str(self.radiodetails)
+        os.environ['CURRENT_IMAGE'] = str(self.radioimage['url'])
+        os.environ['CURRENT_ID'] = str(id)
 
     def main_loop(self):
         print("[Debugger] thread listener loaded")
@@ -77,39 +83,39 @@ class Listener:
 
                         small_image = {"url": "logo", "text": "Яндекс.Музыка"}
                         print(self.radiodetails, self.radiostate.lower())
-                        os.environ['INFO_CURRENT_STATUS'] = f"{self.radiodetails} {self.radiostate.lower()}"
+                        self.update_info(current['description'])
                         discord.update(self.radiostate, self.radiodetails, self.radioimage, small_image)
 
                 case "playlist":
                     track = current['track_info']
                     if self.switchid != track['id']:
                         self.switchid = track['id']
-                        state = f"{track['artists']}"
-                        details = f"{track['title']}"
+                        self.radiodetails = f"{track['artists']}"
+                        self.radiostate = f"{track['title']}"
 
                         if track['title'] == track['album_title']:
-                            large_image = {"url": current['track_info']['cover_link'],
-                                           "text": f"{track['title']}"}
+                            self.radioimage = {"url": current['track_info']['cover_link'],
+                                               "text": f"{track['title']}"}
                         else:
-                            large_image = {"url": current['track_info']['cover_link'],
-                                           "text": f"{track['title']} ({track['album_title']})"}
+                            self.radioimage = {"url": current['track_info']['cover_link'],
+                                               "text": f"{track['title']} ({track['album_title']})"}
 
                         small_image_url = current['track_info']['artist_cover'] \
                             if current['track_info']['artist_cover'] is not None else "artists"
                         small_image = {"url": small_image_url, "text": track['artists']}
                         buttons = [{"label": "Oткрыть в Я.Mузыкa", "url": track['track_link']}]
 
-                        print("Слушаем", state, "-", details)
-                        os.environ['INFO_CURRENT_STATUS'] = f"Слушаем {state} - {details}"
+                        print("Слушаем", self.radiodetails, "-", self.radiostate)
                         # buttons
-                        discord.update(state, details, large_image, small_image, buttons)
+                        self.update_info(track['id'])
+                        discord.update(self.radiodetails, self.radiostate, self.radioimage, small_image, buttons)
                         
                 case "radio_track":
                     radiotrack = current['track_info']
                     if self.switchid != current['type']:
                         self.switchid = current['type']
-                        state = radiotrack['title']
-                        details = "Радио по треку"
+                        self.radiostate = radiotrack['title']
+                        self.radiodetails = "Радио по треку"
 
                         large_image = {"url": f"https://{radiotrack['cover_link'].replace('%%', '800x800')}",
                                        "text": f"Радио по треку {radiotrack['artists']} - {radiotrack['title']}"}
@@ -117,9 +123,9 @@ class Listener:
                         small_image = {"url": "radio_editorial",
                                        "text": f"{radiotrack['artists']} - {radiotrack['title']}"}
 
-                        print("Слушаем", details.lower(), state.lower())
-                        os.environ['INFO_CURRENT_STATUS'] = f"Слушаем {details.lower()} {state.lower()}"
-                        discord.update(state, details, large_image, small_image)
+                        print("Слушаем", self.radiostate.lower(), self.radiodetails.lower())
+                        self.update_info(current['type'])
+                        discord.update(self.radiostate, self.radiodetails, large_image, small_image)
             time.sleep(2)
 
 

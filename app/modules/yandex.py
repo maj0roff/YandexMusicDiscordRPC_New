@@ -15,19 +15,6 @@ class Yandex:
             raise yandex_music.exceptions.UnauthorizedError("Токен не указан или не действителен")
         self.queue = ""
 
-    def __get_last_queue_id(self):
-        # Известные типы очереди
-        # radio - Делится на user:onyourwave, pesonal, genre:(жанр, к примеру, rap), mood, activity, epoch
-        # various - Появился после адпейта, ещё не разобрался что к чему. Появляется, вроде как, при включении
-        # плейлистов собранных под пользователя (только из под винды. хотя хз, вообще хз)
-        # (можно юзать как два типа ниже)
-        # my_music - Появляется при прослушивании любого плейлиста, но к сожалению не имеет описания и айди.
-        # playlist - Анологично тому, что выше
-        try:
-            return self.cli.queues_list()[0]
-        except yandex_music.exceptions.NetworkError:
-            return self.cli.queues_list()[0]
-
     @staticmethod
     def __get_track_info(trackid: TrackId) -> dict:
         fetched_track = trackid.fetch_track()
@@ -54,18 +41,22 @@ class Yandex:
 
     def get_current_playing_info(self) -> dict:
         doneresult = {}
-        try:
-            queue_raw = self.__get_last_queue_id()
-        except (requests.exceptions.ReadTimeout, yandex_music.exceptions.TimedOutError):
-            queue_raw = self.__get_last_queue_id()
 
+        """
+        try:
+            queue_raw = self.cli.queues_list()[0]
+        except (requests.exceptions.ReadTimeout, yandex_music.exceptions.TimedOutError):
+            queue_raw = self.cli.queues_list()[0]
+        """
+
+        queue_raw = self.cli.queues_list()[0]
         if queue_raw.context.type == "radio":
-            self.queue = self.__get_last_queue_id()
+            self.queue = self.cli.queues_list()[0]
         else:
             try:
                 self.queue = self.cli.queue(queue_raw.id)
             except yandex_music.exceptions.NotFoundError:
-                self.queue = self.__get_last_queue_id()
+                self.queue = self.cli.queues_list()[0]
 
         queue_type = self.queue.context.type
 
