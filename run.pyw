@@ -15,8 +15,10 @@ config.read('config.ini')
 os.environ["YMT"] = config.get('Settings', 'token') # Здесь должен быть ваш токен Яндекс музыки
 
 if __name__ == "__main__":
+    if not os.path.exists("resources/cache") or not os.path.exists("resources"):
+        raise Exception("Не найдены необходимые файлы. Пожалуйста, прочтите инструкцию.")
     if os.getenv("YMT") == "TOKEN_HERE" or "":
-        raise "Токен не указан или не действителен"
+        raise Exception("Не указан токен, укажите пожалуйста токен.")
 
     from app.listener.listener import Listener
     from app.ui.ui import main as UI
