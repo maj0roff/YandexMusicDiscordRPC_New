@@ -1,4 +1,6 @@
 import os
+import time
+
 import psutil
 
 import requests.exceptions
@@ -15,10 +17,21 @@ class Yandex:
             raise yandex_music.exceptions.UnauthorizedError("Токен не указан или не действителен")
         self.queue = ""
 
+    def get_user_info(self) -> dict:
+        userinfo = self.cli.me
+
+        return userinfo
+
     @staticmethod
     def __get_track_info(trackid: TrackId) -> dict:
-        fetched_track = trackid.fetch_track()
-        fetched_album = fetched_track.albums[0]
+        try:
+            fetched_track = trackid.fetch_track()
+            fetched_album = fetched_track.albums[0]
+        except yandex_music.exceptions.TimedOutError:
+            time.sleep(4)
+            fetched_track = trackid.fetch_track()
+            fetched_album = fetched_track.albums[0]
+
         tid = fetched_track.id
         title = fetched_track.title
         artists = ", ".join(fetched_track.artists_name())
@@ -49,7 +62,12 @@ class Yandex:
             queue_raw = self.cli.queues_list()[0]
         """
 
-        queue_raw = self.cli.queues_list()[0]
+        try:
+            queue_raw = self.cli.queues_list()[0]
+        except yandex_music.exceptions.TimedOutError:
+            time.sleep(4)
+            queue_raw = self.cli.queues_list()[0]
+
         if queue_raw.context.type == "radio":
             self.queue = self.cli.queues_list()[0]
         else:
@@ -59,7 +77,6 @@ class Yandex:
                 self.queue = self.cli.queues_list()[0]
 
         queue_type = self.queue.context.type
-
         match queue_type:
             case "radio":
                 if self.queue.context.id.split(':')[0] == "track":
@@ -87,6 +104,9 @@ class Yandex:
                 doneresult.update({"type": "playlist",
                                    "track_info": self.__get_track_info(self.queue.get_current_track())})
             case "playlist":
+                doneresult.update({"type": "playlist",
+                                   "track_info": self.__get_track_info(self.queue.get_current_track())})
+            case "artist":
                 doneresult.update({"type": "playlist",
                                    "track_info": self.__get_track_info(self.queue.get_current_track())})
 

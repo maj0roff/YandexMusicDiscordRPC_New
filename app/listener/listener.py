@@ -1,6 +1,7 @@
 import os
 import time
 
+import yandex_music.exceptions
 
 os.environ['DISCORD_CLIENTID'] = "1069497740238794853"
 
@@ -8,7 +9,12 @@ from app.modules.yandex import Yandex
 from app.modules.discord import Discord
 
 discord = Discord()
-yandex = Yandex()
+try:
+    yandex = Yandex()
+except yandex_music.exceptions.NetworkError:
+    yandex = Yandex()
+os.environ['USERNAME'] = str(yandex.get_user_info()["account"]["login"] + "@yandex.ru")
+
 
 class Listener:
     def __init__(self):
@@ -25,14 +31,14 @@ class Listener:
         os.environ['CURRENT_ID'] = str(id)
 
     def main_loop(self):
-        print("[Debugger] thread listener loaded")
-        os.system("cls")
-        print("--------------------------")
-        print("t.me/maj0rblog")
-        print("--------------------------\n")
         discord.connect()
         while True:
-            current = yandex.get_current_playing_info()
+            try:
+                current = yandex.get_current_playing_info()
+            except yandex_music.exceptions.NetworkError:
+                time.sleep(3)
+                current = yandex.get_current_playing_info()
+
             match current['type']:
                 case "radio":
                     if self.desc != current['description']:
@@ -107,6 +113,7 @@ class Listener:
 
                         print("Слушаем", self.radiodetails, "-", self.radiostate)
                         # buttons
+
                         self.update_info(track['id'])
                         discord.update(self.radiodetails, self.radiostate, self.radioimage, small_image, buttons)
                         
@@ -125,8 +132,9 @@ class Listener:
 
                         print("Слушаем", self.radiostate.lower(), self.radiodetails.lower())
                         self.update_info(current['type'])
+
                         discord.update(self.radiostate, self.radiodetails, large_image, small_image)
-            time.sleep(2)
+            time.sleep(7)
 
 
 

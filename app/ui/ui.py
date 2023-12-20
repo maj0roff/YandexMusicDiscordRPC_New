@@ -1,6 +1,6 @@
 import webbrowser
-import wx.adv
 import wx
+import wx.adv
 
 import os
 import psutil
@@ -42,6 +42,7 @@ def create_label(menu, icon, label, func):
 
 class TaskBarIcon(wx.adv.TaskBarIcon):
     def __init__(self, frame):
+
         self.done_cover = None
         self.artist_label = None
         self.track_label = None
@@ -52,14 +53,18 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         self.frame = frame
         super(TaskBarIcon, self).__init__()
         self.set_icon(TRAY_ICON)
-        self.ShowBalloon("Привет!", "Я нахожусь в трее.")
         self.Bind(wx.adv.EVT_TASKBAR_RIGHT_DOWN, self.on_right_down)
+        self.ShowBalloon("Привет!", "Я нахожусь в трее.")
         self.trackinfo = self.get_track_info()
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
         logo_label = create_label(menu, png_to_bitmap(TRAY_ICON), 'YandexMusicRPC', self.opengit)
         telegram_label = create_label(menu, png_to_bitmap(TELEGRAM_ICON), 'Мой телеграм канал', self.opentg)
+        menu.AppendSeparator()
+        username_label = create_label(menu, None, f'Вы вошли как: {os.environ.get("USERNAME")}', None)
+        username_label.Enable(False)
+        userexit_label = create_label(menu, None, f'Выйти из аккаунта', self.exitacc)
         menu.AppendSeparator()
         self.track_label = create_label(menu, self.done_cover, f'{self.trackinfo["track"]}', None)
         self.artist_label = create_label(menu, None, f'{self.trackinfo["artist"]}', None)
@@ -79,6 +84,17 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
     def set_icon(self, path):
         icon = wx.Icon(path)
         self.SetIcon(icon, TRAY_TOOLTIP)
+
+    def exitacc(self, event):
+        import configparser
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        config.set('Settings', 'token', "TOKEN_HERE")
+        with open('config.ini', 'w') as cfg:
+            config.write(cfg)
+        self.ShowBalloon("Уведомление", "Вы успешно вышли из аккаунта.")
+        wx.CallAfter(self.Destroy)
+        self.frame.Close()
 
     def opengit(self, event):
         webbrowser.open("https://github.com/maj0roff/YandexMusicDiscordRPC_New")
@@ -105,7 +121,6 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         self.done_cover = png_to_bitmap(self.track_cover, (32, 32))
 
     def on_exit(self, event):
-        self.ShowBalloon("Выход", "Всё? Завершаю работу!")
         wx.CallAfter(self.Destroy)
         self.frame.Close()
 

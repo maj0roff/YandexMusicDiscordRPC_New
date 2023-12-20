@@ -7,7 +7,7 @@ import os
 import psutil
 import configparser
 from threading import Thread
-
+from app.modules.token import update_token
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -17,14 +17,20 @@ os.environ["YMT"] = config.get('Settings', 'token') # Здесь должен б
 if __name__ == "__main__":
     if not os.path.exists("resources/cache") or not os.path.exists("resources"):
         raise Exception("Не найдены необходимые файлы. Пожалуйста, прочтите инструкцию.")
+
     if os.getenv("YMT") == "TOKEN_HERE" or "":
-        raise Exception("Не указан токен, укажите пожалуйста токен.")
+        update_token()
+        current_system_pid = os.getpid()
 
-    from app.listener.listener import Listener
-    from app.ui.ui import main as UI
+        ThisSystem = psutil.Process(current_system_pid)
+        ThisSystem.terminate()
 
-    listener = Thread(target=Listener().main_loop)
-    listener.start()
+    else:
+        from app.listener.listener import Listener
+        from app.ui.ui import main as UI
 
-    ui = Thread(target=UI)
-    ui.start()
+        listener = Thread(target=Listener().main_loop)
+        listener.start()
+
+        ui = Thread(target=UI)
+        ui.start()
