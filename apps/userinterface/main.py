@@ -13,6 +13,26 @@ TRAY_ICON = 'resources/logo.ico'
 TELEGRAM_ICON = 'resources/telegram.png'
 
 
+def update(version):
+    r = requests.get("https://api.github.com/repos/maj0roff/YandexMusicDiscordRPC_New/releases/latest")
+    latest_version = r.json()["tag_name"]
+    update_log = re.sub(r'!\[image\]\(.*?\)', "", r.json()["body"])
+    if latest_version != version:
+        resp = wx.MessageBox(f'Обнаружена новая версия программы.'
+                             f'\n\nСписок изменений:{update_log}'
+                             f'\n\nХотите обновиться?',
+                             'Обновление',
+                             wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
+        if resp == wx.OK:
+            print(os.getcwd())
+            os.system(f"{os.getcwd()}\\updater.exe")
+            current_system_pid = os.getpid()
+
+            ThisSystem = psutil.Process(current_system_pid)
+            ThisSystem.terminate()
+        else:
+            return
+
 def add_corners(im, rad):
     circle = Image.new('L', (rad * 2, rad * 2), 0)
     draw = ImageDraw.Draw(circle)
@@ -131,36 +151,16 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
 
 class App(wx.App):
     def OnInit(self):
+        update(os.environ.get("Version"))
         frame = wx.Frame(None)
         self.SetTopWindow(frame)
         TaskBarIcon(frame)
         return True
 
 
-def update(version):
-    r = requests.get("https://api.github.com/repos/maj0roff/YandexMusicDiscordRPC_New/releases/latest")
-    latest_version = r.json()["tag_name"]
-    update_log = re.sub(r'!\[image\]\(.*?\)', "", r.json()["body"])
-    if latest_version != version:
-        resp = wx.MessageBox(f'Обнаружена новая версия программы.'
-                             f'\n\nСписок изменений:{update_log}'
-                             f'\n\nХотите обновиться?',
-                             'Обновление',
-                             wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
-        if resp == wx.OK:
-            print(os.getcwd())
-            os.system(f"{os.getcwd()}\\updater.exe")
-            current_system_pid = os.getpid()
-
-            ThisSystem = psutil.Process(current_system_pid)
-            ThisSystem.terminate()
-        else:
-            return
-
-def run_ui(version):
+def run_ui():
     app = App(False)
     app.MainLoop()
-    update(version)
     current_system_pid = os.getpid()
 
     ThisSystem = psutil.Process(current_system_pid)
