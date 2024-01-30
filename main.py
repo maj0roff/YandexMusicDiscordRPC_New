@@ -5,10 +5,7 @@ import os
 import threading
 
 
-version = "Stable1.3"
-
-from apps.update import Updater
-Updater(version).update()
+os.environ["Version"] = "Stable1.3"
 
 
 # Yandex env
