@@ -1,6 +1,10 @@
 # **Yandex Music Discord Rich Presence**
 Интеграция Яндекс Музыки в Дискорд (Discord)
 
+![image](https://github.com/maj0roff/YandexMusicDiscordRPC_New/assets/54349566/edc53eaf-e904-4748-83fe-2f5e6d60dd09)
+![image](https://github.com/maj0roff/YandexMusicDiscordRPC_New/assets/54349566/6fe1dc7e-55ca-4bb3-906c-b81a5b44da6a)
+
+
 -----
 
 ## Обновления и информация о програме
