@@ -2,9 +2,9 @@ import os
 import json
 import time
 import configparser
+import psutil
 
 from contextlib import suppress
-from apps.token import update_token
 
 import yandex_music.exceptions
 from yandex_music import Client, TrackId
@@ -18,13 +18,19 @@ class Yandex:
         print("Initializing Yandex")
         self.token = config.get("Settings", "token")
         if 'Ag' not in self.token:
-            update_token()
+            os.startfile(f"{os.getcwd()}\\authorization.exe")
+            current_system_pid = os.getpid()
 
+            ThisSystem = psutil.Process(current_system_pid)
+            ThisSystem.terminate()
         try:
             self.cli = Client(self.token).init()
         except yandex_music.exceptions.UnauthorizedError:
-            update_token()
-            self.cli = Client(self.token).init()
+            os.startfile(f"{os.getcwd()}\\authorization.exe")
+            current_system_pid = os.getpid()
+
+            ThisSystem = psutil.Process(current_system_pid)
+            ThisSystem.terminate()
         self.queue = ""
 
     def get_user_info(self) -> dict:
@@ -58,12 +64,17 @@ class Yandex:
                 "artist_cover": artist_cover,
                 "track_link": f"https://music.yandex.ru/album/{fetched_track.albums[0].id}/track/{tid}"}
 
+    def avoid_attribute_error(self, queue):
+        with suppress(AttributeError):
+            return self.__get_track_info(queue.get_current_track())
+
     def run_yandex(self):
         os.environ["Yandex_Login"] = self.get_user_info()["login"]
         while True:
             doneresult = {}
 
             queue_raw = self.cli.queues_list()[0]
+            print(queue_raw)
 
             if queue_raw.context.type == "radio":
                 self.queue = self.cli.queues_list()[0]
@@ -93,7 +104,7 @@ class Yandex:
                                            "description": self.queue.context.description})
                 case "various":
                     try:
-                        track_info = self.__get_track_info(self.queue.get_current_track())
+                        track_info = self.avoid_attribute_error(self.queue)
                         doneresult.update({"type": "playlist",
                                            "track_info": track_info})
                     except TypeError:
@@ -101,13 +112,14 @@ class Yandex:
                                            "description": "Слушает радио"})
                 case "my_music":
                     doneresult.update({"type": "playlist",
-                                       "track_info": self.__get_track_info(self.queue.get_current_track())})
+                                       "track_info": self.avoid_attribute_error(self.queue)})
                 case "playlist":
                     doneresult.update({"type": "playlist",
-                                       "track_info": self.__get_track_info(self.queue.get_current_track())})
+                                       "track_info": self.avoid_attribute_error(self.queue)})
                 case "artist":
                     doneresult.update({"type": "playlist",
-                                       "track_info": self.__get_track_info(self.queue.get_current_track())})
+                                       "track_info": self.avoid_attribute_error(self.queue)})
 
+            print(doneresult)
             os.environ["Yandex_Current"] = json.dumps(doneresult)
             time.sleep(3)
