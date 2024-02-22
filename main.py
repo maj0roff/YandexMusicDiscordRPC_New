@@ -3,10 +3,9 @@
 import json
 import os
 import threading
+import requests
 
-
-os.environ["Version"] = "Stable1.3"
-
+os.environ["Version"] = "S_02_01"
 
 # Yandex env
 os.environ["Yandex_Current"] = json.dumps({'type': 'waiting'})

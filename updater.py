@@ -28,15 +28,17 @@ print("Распаковка архива...")
 
 z = zipfile.ZipFile(f"{os.getcwd()}\\update_cache\\{filename}")
 z.extractall(f"{os.getcwd()}\\update_cache\\")
+z.close()
 
 shutil.rmtree(f"{os.getcwd()}\\resources")
-shutil.copytree(f"{os.getcwd()}\\update_cache\\build\\resources", f"{os.getcwd()}\\resources")
-shutil.copyfile(f"{os.getcwd()}\\update_cache\\build\\YandexMusicRPC.exe", f"{os.getcwd()}\\YandexMusicRPC.exe")
+shutil.copytree(f"{os.getcwd()}\\update_cache\\resources", f"{os.getcwd()}\\resources")
+shutil.copyfile(f"{os.getcwd()}\\update_cache\\authorization.exe", f"{os.getcwd()}\\authorization.exe")
+shutil.copyfile(f"{os.getcwd()}\\update_cache\\YandexMusicRPC.exe", f"{os.getcwd()}\\YandexMusicRPC.exe")
 
 print("Чистим временные файлы...")
 shutil.rmtree(f"{os.getcwd()}\\update_cache")
 
 print("Установка успешно закончена! Программа запустится через 5 секунд")
 time.sleep(5)
-os.system(f"{os.getcwd()}\\YandexMusicRPC.exe")
+os.startfile(f"{os.getcwd()}\\YandexMusicRPC.exe")
 exit(1)
