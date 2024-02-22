@@ -1,37 +1,17 @@
 import webbrowser
 import wx
 import wx.adv
-import re
 import os
 import psutil
 import requests
 import json
+import re
 from PIL import Image, ImageDraw
 
 TRAY_TOOLTIP = 'YandexMusicRPC'
 TRAY_ICON = 'resources/logo.ico'
 TELEGRAM_ICON = 'resources/telegram.png'
 
-
-def update(version):
-    r = requests.get("https://api.github.com/repos/maj0roff/YandexMusicDiscordRPC_New/releases/latest")
-    latest_version = r.json()["tag_name"]
-    update_log = re.sub(r'!\[image\]\(.*?\)', "", r.json()["body"])
-    if latest_version != version:
-        resp = wx.MessageBox(f'Обнаружена новая версия программы.'
-                             f'\n\nСписок изменений:{update_log}'
-                             f'\n\nХотите обновиться?',
-                             'Обновление',
-                             wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
-        if resp == wx.OK:
-            print(os.getcwd())
-            os.system(f"{os.getcwd()}\\updater.exe")
-            current_system_pid = os.getpid()
-
-            ThisSystem = psutil.Process(current_system_pid)
-            ThisSystem.terminate()
-        else:
-            return
 
 def add_corners(im, rad):
     circle = Image.new('L', (rad * 2, rad * 2), 0)
@@ -60,10 +40,34 @@ def create_label(menu, icon, label, func):
     menu.Append(item)
     return item
 
+def update():
+    r = requests.get("https://api.github.com/repos/maj0roff/YandexMusicDiscordRPC_New/releases/latest")
+    latest_version = r.json()["tag_name"]
+    update_log = re.sub(r'!\[image\]\(.*?\)', "", r.json()["body"])
+    if latest_version != os.getenv("Version"):
+        resp = wx.MessageBox(f'Обнаружена новая версия программы.'
+                             f'\n\nСписок изменений:\n{update_log}'
+                             f'\n\nХотите обновиться?',
+                             'Обновление',
+                             wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
+        if resp == wx.OK:
+            print(os.getcwd())
+            os.startfile(f"{os.getcwd()}\\updater.exe")
+            current_system_pid = os.getpid()
+
+            ThisSystem = psutil.Process(current_system_pid)
+            ThisSystem.terminate()
+
+        else:
+            return
 
 class TaskBarIcon(wx.adv.TaskBarIcon):
     def __init__(self, frame):
         print("Initializing UI")
+
+        print("Checking for updates...")
+        update()
+
         self.done_cover = None
         self.artist_label = None
         self.track_label = None
@@ -119,6 +123,9 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         self.ShowBalloon("Уведомление", "Вы успешно вышли из аккаунта.")
         wx.CallAfter(self.Destroy)
         self.frame.Close()
+        current_system_pid = os.getpid()
+        ThisSystem = psutil.Process(current_system_pid)
+        ThisSystem.terminate()
 
     def opengit(self, event):
         webbrowser.open("https://github.com/maj0roff/YandexMusicDiscordRPC_New")
@@ -151,7 +158,6 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
 
 class App(wx.App):
     def OnInit(self):
-        update(os.environ.get("Version"))
         frame = wx.Frame(None)
         self.SetTopWindow(frame)
         TaskBarIcon(frame)
