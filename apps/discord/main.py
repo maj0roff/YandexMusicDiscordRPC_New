@@ -7,7 +7,8 @@ from pypresence import Presence
 
 class Discord:
     def __init__(self):
-        print("Initializing Discord")
+        print("[ Discord ] Initializing module")
+        print("[ Discord ] Active!")
         self.appid = "1069497740238794853"
         self.cli = Presence(self.appid)
         self.switchid = "0"
@@ -17,7 +18,6 @@ class Discord:
         self.radiodetails = str
 
     def __connect(self):
-        print("Connected to Discord")
         self.cli.connect()
 
     def __disconnect(self):

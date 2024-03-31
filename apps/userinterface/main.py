@@ -45,27 +45,31 @@ def update():
     latest_version = r.json()["tag_name"]
     update_log = re.sub(r'!\[image\]\(.*?\)', "", r.json()["body"])
     if latest_version != os.getenv("Version"):
-        resp = wx.MessageBox(f'Обнаружена новая версия программы.'
-                             f'\n\nСписок изменений:\n{update_log}'
-                             f'\n\nХотите обновиться?',
-                             'Обновление',
-                             wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
-        if resp == wx.OK:
-            print(os.getcwd())
-            os.startfile(f"{os.getcwd()}\\updater.exe")
-            current_system_pid = os.getpid()
-
-            ThisSystem = psutil.Process(current_system_pid)
-            ThisSystem.terminate()
-
+        if os.getenv("DEBUG_Update") == "True":
+            print("[ UI ] Update found. Skipping due to debug_update is true")
         else:
-            return
+            print("[ UI ] Update found. Calling MessageBox")
+            resp = wx.MessageBox(f'Обнаружена новая версия программы.'
+                                 f'\n\nСписок изменений:\n{update_log}'
+                                 f'\n\nХотите обновиться?',
+                                 'Обновление',
+                                 wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
+            if resp == wx.OK:
+                print("[ UI ] Starting updater. Bye")
+                os.startfile(f"{os.getcwd()}\\updater.exe")
+                current_system_pid = os.getpid()
+
+                ThisSystem = psutil.Process(current_system_pid)
+                ThisSystem.terminate()
+            else:
+                return
 
 class TaskBarIcon(wx.adv.TaskBarIcon):
     def __init__(self, frame):
-        print("Initializing UI")
+        print("[ UI ] Initializing module")
+        print("[ UI ] Active!")
 
-        print("Checking for updates...")
+        print("[ UI ] Checking for updates...")
         update()
 
         self.done_cover = None
